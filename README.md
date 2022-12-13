@@ -1,1 +1,1 @@
-# SQL-AB-TESTING
+# In this project the business is conducting multiple tests to see which layout of items on their website produces the most views and sales. I take their dataset with multiple tables and determine which strategy is best using AB testing.  This dataset has already been cleaned so this project focuses on the anaylsis.
