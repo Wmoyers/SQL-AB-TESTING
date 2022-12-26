@@ -1,0 +1,45 @@
+--This code is for orders within 30 days of the test_start_date
+SELECT 
+  test_assignment,
+  COUNT(user_id) AS users,
+  --COUNT(DISTINCT item_id) AS total_items,
+  --SUM(order_binary) AS orders_binary,
+  SUM(order_binary_30d) AS orders_completed_30d
+FROM
+(
+  SELECT 
+    assignments.item_id,
+    assignments.user_id,
+    assignments.test_number,
+    assignments.test_assignment,
+    --assignments.invoice_id,
+    MAX(CASE WHEN (created_at >= test_start_date) THEN 1 ELSE 0 END) AS order_binary,
+    MAX(CASE WHEN (created_at >= test_start_date AND DATE_PART('day',created_at - test_start_date) <= 30) THEN 1 ELSE 0 END) AS order_binary_30d
+  FROM
+  (
+    SELECT 
+      final_assignments.item_id AS item_id,
+      test_number,
+      user_id,
+      test_assignment,
+      test_start_date,
+      created_at
+      --invoice_id
+    FROM 
+      dsv1069.final_assignments
+    LEFT JOIN 
+      dsv1069.orders
+    ON 
+      final_assignments.item_id = orders.item_id
+    WHERE 
+      test_number = 'item_test_2'
+  ) as assignments
+  GROUP BY
+    assignments.item_id,
+    assignments.test_number,
+    assignments.user_id,
+    assignments.test_assignment
+    --assignments.invoice_id
+) orders_binary
+GROUP BY
+  test_assignment
