@@ -1,0 +1,62 @@
+SELECT 
+  test_assignment,
+  COUNT(user_id) AS users,
+  --COUNT(DISTINCT item_id) AS total_items,
+  --SUM(views_binary) AS views_binary,
+  SUM(views_binary_30d) AS views_30d
+  
+FROM
+(
+  SELECT 
+    assignments.item_id,
+    assignments.user_id,
+    assignments.test_number,
+    assignments.test_assignment,
+    assignments.event_id,
+    MAX(CASE WHEN (event_time >= test_start_date) THEN 1 ELSE 0 END) AS views_binary,
+    MAX(CASE WHEN (event_time >= test_start_date AND DATE_PART('day',event_time - test_start_date) <= 30) THEN 1 ELSE 0 END) AS views_binary_30d
+  FROM
+  (
+    SELECT 
+      final_assignments.item_id AS item_id,
+      test_number,
+      user_id,
+      test_assignment,
+      test_start_date,
+      event.event_time as event_time,
+      event.event_id as event_id
+    FROM 
+      dsv1069.final_assignments
+    LEFT JOIN 
+      (
+      SELECT
+        event_time,
+        event_id,
+        user_id,
+        MAX(CASE WHEN parameter_name = 'item_id'
+              THEN CAST(parameter_value AS INT)
+              ELSE NULL 
+              END) AS item_id
+      FROM 
+        dsv1069.events 
+      WHERE
+        event_name = 'view_item'
+      GROUP BY 
+        event_id,
+        user_id,
+        event_time
+      ) event
+    ON 
+      final_assignments.item_id = event.item_id
+    WHERE 
+      test_number = 'item_test_2'
+  ) as assignments
+  GROUP BY
+    assignments.item_id,
+    assignments.test_number,
+    assignments.user_id,
+    assignments.test_assignment,
+    assignments.event_id
+) as views_binary
+GROUP BY
+  test_assignment
